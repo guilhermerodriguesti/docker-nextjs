@@ -1,0 +1,65 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "volumes": [
+    {
+      "name": "nextjs-volume",
+      "host": {
+        "sourcePath": "/var/app/current/nextjs"
+      }
+    },
+    {
+      "name": "nginx-proxy-conf",
+      "host": {
+        "sourcePath": "/var/app/current/docker/nginx"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "nextjs",
+      "image": "node:8.15.0-alpine",
+      "essential": true,
+      "memory": 512,
+      "portMappings": [
+        {
+          "hostPort": 3000,
+          "containerPort": 3000
+        }
+      ],
+      "workingDirectory": "/app",
+      "command": ["npm", "run", "production-start"],
+      "mountPoints": [
+        {
+          "sourceVolume": "nextjs-volume",
+          "containerPath": "/app"
+        }
+      ]
+    },
+    {
+      "name": "nginx-proxy",
+      "image": "nginx:1.15.8-alpine",
+      "essential": true,
+      "memory": 128,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        }
+      ],
+      "links": [
+        "nextjs"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "nginx-proxy-conf",
+          "containerPath": "/etc/nginx/conf.d",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "awseb-logs-nginx-proxy",
+          "containerPath": "/var/log/nginx"
+        }
+      ]
+    }
+  ]
+}
